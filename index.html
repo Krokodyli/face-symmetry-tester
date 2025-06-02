@@ -82,12 +82,20 @@
       height: auto;
       border: 2px solid #fff;
     }
-    .label {
+    .label-button {
       margin-top: 5px;
       font-size: 1.2em;
       color: #fff;
+      background-color: #444;
+      border: none;
+      padding: 6px 10px;
+      cursor: pointer;
+      border-radius: 4px;
       word-break: break-word;
       text-align: center;
+    }
+    .label-button:hover {
+      background-color: #555;
     }
   </style>
 </head>
@@ -113,7 +121,6 @@
       const nameInput = document.getElementById('nameInput');
       const labelBtn = document.getElementById('labelBtn');
 
-      // Access webcam
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         video.srcObject = stream;
@@ -122,7 +129,6 @@
         return;
       }
 
-      // Initial slider at center
       video.addEventListener('loadedmetadata', () => updateSlider(video.clientWidth / 2));
 
       let dragging = false;
@@ -133,7 +139,6 @@
         slider.style.left = sliderX + 'px';
       }
 
-      // Drag handling
       slider.addEventListener('pointerdown', e => {
         dragging = true;
         slider.setPointerCapture(e.pointerId);
@@ -148,7 +153,6 @@
         slider.releasePointerCapture(e.pointerId);
       });
 
-      // Keyboard
       document.addEventListener('keydown', e => {
         if (e.key === 'ArrowLeft') updateSlider(sliderX - 5);
         else if (e.key === 'ArrowRight') updateSlider(sliderX + 5);
@@ -162,10 +166,8 @@
         }
       });
 
-      // Click anywhere on video to capture
       videoContainer.addEventListener('click', () => performMirror());
 
-      // Mirror button click
       labelBtn.addEventListener('click', () => performMirror());
 
       function performMirror() {
@@ -180,7 +182,6 @@
         const scale = vw / displayW;
         const sx = Math.floor(sliderX * scale);
 
-        // Full frame
         const fullCanvas = document.createElement('canvas');
         fullCanvas.width = vw;
         fullCanvas.height = vh;
@@ -189,7 +190,6 @@
 
         result.innerHTML = '';
 
-        // LEFT-SYMMETRIC
         const leftW = sx;
         const leftCanvas = document.createElement('canvas');
         leftCanvas.width = leftW * 2;
@@ -202,7 +202,6 @@
         lctx.drawImage(fullCanvas, 0, 0, leftW, vh, 0, 0, leftW, vh);
         lctx.restore();
 
-        // RIGHT-SYMMETRIC
         const rightW = vw - sx;
         const rightCanvas = document.createElement('canvas');
         rightCanvas.width = rightW * 2;
@@ -215,7 +214,6 @@
         rctx.restore();
         rctx.drawImage(fullCanvas, sx, 0, rightW, vh, rightW, 0, rightW, vh);
 
-        // Wrappers for labeling
         const leftWrapper = document.createElement('div');
         leftWrapper.className = 'wrapper';
         leftWrapper.id = 'leftWrapper';
@@ -241,23 +239,37 @@
         const leftLabel = left + revLeft;
         const rightLabel = right + revRight;
 
-        // Remove old labels
-        document.querySelectorAll('.label').forEach(el => el.remove());
+        document.querySelectorAll('.label-button').forEach(el => el.remove());
 
-        // Append labels
         const leftWrapper = document.getElementById('leftWrapper');
         const rightWrapper = document.getElementById('rightWrapper');
         if (leftWrapper) {
-          const lbl = document.createElement('div');
-          lbl.className = 'label';
-          lbl.textContent = leftLabel;
-          leftWrapper.appendChild(lbl);
+          const leftCanvas = leftWrapper.querySelector('canvas');
+          const btn = document.createElement('button');
+          btn.className = 'label-button';
+          btn.textContent = leftLabel;
+          btn.addEventListener('click', () => {
+            const dataURL = leftCanvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = dataURL;
+            link.download = leftLabel + '.png';
+            link.click();
+          });
+          leftWrapper.appendChild(btn);
         }
         if (rightWrapper) {
-          const lbl = document.createElement('div');
-          lbl.className = 'label';
-          lbl.textContent = rightLabel;
-          rightWrapper.appendChild(lbl);
+          const rightCanvas = rightWrapper.querySelector('canvas');
+          const btn = document.createElement('button');
+          btn.className = 'label-button';
+          btn.textContent = rightLabel;
+          btn.addEventListener('click', () => {
+            const dataURL = rightCanvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = dataURL;
+            link.download = rightLabel + '.png';
+            link.click();
+          });
+          rightWrapper.appendChild(btn);
         }
       }
     })();
